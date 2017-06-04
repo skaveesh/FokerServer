@@ -6,7 +6,7 @@
 	<groupId>com.savick</groupId>
 	<artifactId>foker</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>jar</packaging>
+	<packaging>war</packaging>
 
 	<name>foker</name>
 	<description>Project in Spring Boot for Poker Game Server</description>
