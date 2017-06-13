@@ -18,9 +18,6 @@ public class TestCtrl {
 
     @RequestMapping(value = "t1", method = RequestMethod.GET)
     public Object getTest() {
-
-
-            return ResponseEntity.status(HttpStatus.OK).body("TEST");
-
+        return ResponseEntity.status(HttpStatus.OK).body("TEST");
     }
 }
