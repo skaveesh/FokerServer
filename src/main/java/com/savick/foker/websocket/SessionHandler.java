@@ -11,7 +11,7 @@ import java.util.HashMap;
 @Component
 public class SessionHandler extends TextWebSocketHandler {
 
-    //allowing maximum 5 players from this hash map
+    //allowing maximum 6 players from this hash map
     private static HashMap<Integer, WebSocketSession> gamePlayersHashList = new HashMap<>();
 
     public SessionHandler() {
@@ -20,11 +20,12 @@ public class SessionHandler extends TextWebSocketHandler {
         gamePlayersHashList.put(3, null);
         gamePlayersHashList.put(4, null);
         gamePlayersHashList.put(5, null);
+        gamePlayersHashList.put(6, null);
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
-        for (int i = 1; i < 6; i++) {
+        for (int i = 1; i <= 6; i++) {
             WebSocketSession tempSession = gamePlayersHashList.get(i);
 
             if (tempSession == session)
@@ -57,7 +58,7 @@ public class SessionHandler extends TextWebSocketHandler {
     private void sendMessageToAllPlayers(String messageNotifyPlayer) throws IOException {
         try {
 
-            for (int i = 1; i < 6; i++) {
+            for (int i = 1; i <= 6; i++) {
                 WebSocketSession tempSession = gamePlayersHashList.get(i);
 
                 if (tempSession != null && tempSession.isOpen()) {
