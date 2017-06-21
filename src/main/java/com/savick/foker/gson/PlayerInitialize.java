@@ -8,7 +8,6 @@ public class PlayerInitialize {
     private int playerId;
     private String playerName;
 
-
     public int getPlayerId() {
         return playerId;
     }
