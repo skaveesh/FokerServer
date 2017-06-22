@@ -1,24 +1,50 @@
 package com.savick.foker.game;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.util.List;
 
 /**
  * Created by skaveesh on 2017-06-18.
  */
 public class Player {
 
-    private int playerId;
-    private String playerName;
-    private int score;
-    private WebSocketSession playerSession;
-    private boolean playerReady;
+    @SerializedName("playerId")
+    @Expose
+    private Integer playerId;
 
-    public Player(int playerId, String playerName, int score, WebSocketSession playerSession) {
+    @SerializedName("playerName")
+    @Expose
+    private String playerName;
+
+    @SerializedName("playerReady")
+    @Expose
+    private Boolean playerReady;
+
+    @SerializedName("score")
+    @Expose
+    private Integer score;
+
+    @SerializedName("numberOfChangedCards")
+    @Expose
+    private Integer numberOfChangedCards;
+
+    private transient WebSocketSession playerSession;
+
+    @SerializedName("playerHand")
+    @Expose
+    private List<PlayerHand> playerHand;
+
+    public Player(Integer playerId, String playerName, Boolean playerReady, Integer score, Integer numberOfChangedCards, WebSocketSession playerSession, List<PlayerHand> playerHand) {
         this.playerId = playerId;
         this.playerName = playerName;
+        this.playerReady = playerReady;
         this.score = score;
+        this.numberOfChangedCards = numberOfChangedCards;
         this.playerSession = playerSession;
-        this.playerReady = false;
+        this.playerHand = playerHand;
     }
 
     public int getPlayerId() {
@@ -37,12 +63,28 @@ public class Player {
         this.playerName = playerName;
     }
 
+    public boolean isPlayerReady() {
+        return playerReady;
+    }
+
+    public void setPlayerReady(boolean playerReady) {
+        this.playerReady = playerReady;
+    }
+
     public int getScore() {
         return score;
     }
 
     public void setScore(int score) {
         this.score = score;
+    }
+
+    public Integer getNumberOfChangedCards() {
+        return numberOfChangedCards;
+    }
+
+    public void setNumberOfChangedCards(Integer numberOfChangedCards) {
+        this.numberOfChangedCards = numberOfChangedCards;
     }
 
     public WebSocketSession getPlayerSession() {
@@ -53,11 +95,11 @@ public class Player {
         this.playerSession = playerSession;
     }
 
-    public boolean isPlayerReady() {
-        return playerReady;
+    public List<PlayerHand> getPlayerHand() {
+        return playerHand;
     }
 
-    public void setPlayerReady(boolean playerReady) {
-        this.playerReady = playerReady;
+    public void setPlayerHand(List<PlayerHand> playerHand) {
+        this.playerHand = playerHand;
     }
 }

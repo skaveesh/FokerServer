@@ -1,19 +1,33 @@
 package com.savick.foker.game;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by skaveesh on 2017-06-21.
  */
 public class PlayerHand {
 
-    private int handId;
-    private String suit;
-    private String rank;
-    private boolean isInitial;
+    @SerializedName("handId")
+    @Expose
+    private Integer handId;
 
-    public PlayerHand(int handId, String suit, String rank, boolean isInitial) {
+    @SerializedName("rank")
+    @Expose
+    private Integer rank;
+
+    @SerializedName("suit")
+    @Expose
+    private String suit;
+
+    @SerializedName("isInitial")
+    @Expose
+    private Boolean isInitial;
+
+    public PlayerHand(int handId, int rank, String suit, boolean isInitial) {
         this.handId = handId;
-        this.suit = suit;
         this.rank = rank;
+        this.suit = suit;
         this.isInitial = isInitial;
     }
 
@@ -33,11 +47,11 @@ public class PlayerHand {
         this.suit = suit;
     }
 
-    public String getRank() {
+    public int getRank() {
         return rank;
     }
 
-    public void setRank(String rank) {
+    public void setRank(int rank) {
         this.rank = rank;
     }
 
