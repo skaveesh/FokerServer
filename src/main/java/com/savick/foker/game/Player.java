@@ -35,16 +35,16 @@ public class Player {
 
     @SerializedName("playerHand")
     @Expose
-    private List<PlayerHand> playerHand;
+    private List<PlayerCard> playerHand;
 
-    public Player(Integer playerId, String playerName, Boolean playerReady, Integer score, Integer numberOfChangedCards, WebSocketSession playerSession, List<PlayerHand> playerHand) {
+    public Player(Integer playerId, String playerName, Boolean playerReady, Integer score, Integer numberOfChangedCards, WebSocketSession playerSession, List<PlayerCard> playerCard) {
         this.playerId = playerId;
         this.playerName = playerName;
         this.playerReady = playerReady;
         this.score = score;
         this.numberOfChangedCards = numberOfChangedCards;
         this.playerSession = playerSession;
-        this.playerHand = playerHand;
+        this.playerHand = playerCard;
     }
 
     public int getPlayerId() {
@@ -95,11 +95,11 @@ public class Player {
         this.playerSession = playerSession;
     }
 
-    public List<PlayerHand> getPlayerHand() {
+    public List<PlayerCard> getPlayerHand() {
         return playerHand;
     }
 
-    public void setPlayerHand(List<PlayerHand> playerHand) {
-        this.playerHand = playerHand;
+    public void setPlayerHand(List<PlayerCard> playerCard) {
+        this.playerHand = playerCard;
     }
 }

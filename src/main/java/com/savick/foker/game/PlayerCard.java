@@ -6,11 +6,11 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Created by skaveesh on 2017-06-21.
  */
-public class PlayerHand {
+public class PlayerCard {
 
-    @SerializedName("handId")
+    @SerializedName("cardId")
     @Expose
-    private Integer handId;
+    private Integer cardId;
 
     @SerializedName("rank")
     @Expose
@@ -24,19 +24,19 @@ public class PlayerHand {
     @Expose
     private Boolean isInitial;
 
-    public PlayerHand(int handId, int rank, String suit, boolean isInitial) {
-        this.handId = handId;
+    public PlayerCard(int cardId, int rank, String suit, boolean isInitial) {
+        this.cardId = cardId;
         this.rank = rank;
         this.suit = suit;
         this.isInitial = isInitial;
     }
 
-    public int getHandId() {
-        return handId;
+    public int getCardId() {
+        return cardId;
     }
 
-    public void setHandId(int handId) {
-        this.handId = handId;
+    public void setCardId(int cardId) {
+        this.cardId = cardId;
     }
 
     public String getSuit() {

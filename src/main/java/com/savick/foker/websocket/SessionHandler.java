@@ -37,6 +37,8 @@ public class SessionHandler extends TextWebSocketHandler {
 //        Timer timer = new Timer();
 //        timer.schedule(new EliminatePlayer(), 0, 3000);
 
+
+        //get the card pack and shuffle it
         Deck d1 = new Deck();
         d1.populate();
         d1.shuffle();
@@ -52,7 +54,7 @@ public class SessionHandler extends TextWebSocketHandler {
             if (connectedPlayersList.get(i) == null || !connectedPlayersList.get(i).getPlayerSession().isOpen()) {
 
                 //create dummy player and put it to list
-                connectedPlayersList.put(i, new Player(i, "Player " + i,false, 0, 0,session, null));
+                connectedPlayersList.put(i, new Player(i, "Player " + i, false, 0, 0, session, null));
 
                 try {
                     PlayerIdSend playerIdSend = new PlayerIdSend();
@@ -93,7 +95,7 @@ public class SessionHandler extends TextWebSocketHandler {
             Gson gson = new Gson();
             PlayerInitialize player = gson.fromJson(jsonObject.getJSONObject("SETPLAYERNAME").toString(), PlayerInitialize.class);
 
-            connectedPlayersList.put(player.getPlayerId(), new Player(player.getPlayerId(), player.getPlayerName(),false, 0,0, session, null));
+            connectedPlayersList.put(player.getPlayerId(), new Player(player.getPlayerId(), player.getPlayerName(), false, 0, 0, session, null));
 
         } else if (isJsonObject && jsonObject.has("STARTGAME") && !gameStarted) {
 
@@ -104,90 +106,36 @@ public class SessionHandler extends TextWebSocketHandler {
             player.setPlayerReady(pgs.isStartGame());
             connectedPlayersList.put(pgs.getPlayerId(), player);
 
-            for (int key : connectedPlayersList.keySet()) {
+
+            for (int i = 1; i <= 6; i++) {
                 //if player ready send message to all
-                if (connectedPlayersList.get(key) != null) {
-                    try {
-                        sendMessageToOnGoingGameConnectedPlayers(connectedPlayersList.get(key).getPlayerId() + " number " + connectedPlayersList.get(key).getPlayerName() + " is ready= " + connectedPlayersList.get(key).isPlayerReady());
-                    } catch (Exception e) {
-                        e.printStackTrace();
+
+                try {
+                    if (connectedPlayersList.get(i) != null && !connectedPlayersList.get(i).isPlayerReady()) {
+                        //check if all the players are ready and if ready start the game
+                        PlayerReady playerReady = new PlayerReady();
+
+                        for (int j = 1; j <= 6; j++) {
+                            if (connectedPlayersList.get(j) != null) {
+
+                                playerReady.PLAYERREADY.add(connectedPlayersList.get(j));
+
+                            }
+                        }
+
+                        ///TODO: sending to all
+                        System.out.println(new Gson().toJson(playerReady));
+
+                        break;
+                    } else if (i == 6) {
+                        //start game
+                        startGameAndDistributeCards();
+                        gameStarted = true;
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
-
-        } else if (!isJsonObject && "start".equalsIgnoreCase(message.getPayload())) {
-
-//            for (Card c : gameCardList)
-//                System.out.println(c.getRank() + " " + c.getSuit());
-
-            //game started
-            gameStarted = true;
-
-            //---------ROUND 1----------
-            for (int i = 1; i <= 6; i++) {
-                if (connectedPlayersList.get(i) != null && !gameCardList.isEmpty()) {
-
-                    List<PlayerHand> tempPlayerHand = new ArrayList<>();
-
-                    //distribute random first two initial cards to every player
-                    for (int j = 1; j <= 2; j++) {
-                        Random random = new Random();
-
-                        int randomCardNumber = random.nextInt(gameCardList.size());
-                        PlayerHand playerHand = new PlayerHand(j, gameCardList.get(randomCardNumber).getRank(), gameCardList.get(randomCardNumber).getSuit(), true);
-                        tempPlayerHand.add(playerHand);
-                        gameCardList.remove(randomCardNumber);
-                    }
-
-                    Player tempPlayer = connectedPlayersList.get(i);
-                    tempPlayer.setPlayerHand(tempPlayerHand);
-                    connectedPlayersList.put(i, tempPlayer);
-                }
-            }
-
-            System.out.println("______________________");
-            for (Card c : gameCardList)
-                System.out.println(c.getRank() + " " + c.getSuit());
-            System.out.println("______________________");
-
-            //---------ROUND 2----------
-            // distribute top card of the list to every one, one by one
-            for (int j = 1; j <= 3; j++) {
-                for (int i = 1; i <= 6; i++) {
-                    if (connectedPlayersList.get(i) != null && !gameCardList.isEmpty()) {
-
-                        List<PlayerHand> tempPlayerHand = new ArrayList<>();
-                        tempPlayerHand.addAll(connectedPlayersList.get(i).getPlayerHand());
-
-                        //distribute first card on top of the list
-                        PlayerHand playerHand = new PlayerHand(j + 2, gameCardList.get(0).getRank(), gameCardList.get(0).getSuit(), false);
-                        tempPlayerHand.add(playerHand);
-                        gameCardList.remove(0);
-
-                        Player tempPlayer = connectedPlayersList.get(i);
-                        tempPlayer.setPlayerHand(tempPlayerHand);
-                        connectedPlayersList.put(i, tempPlayer);
-                    }
-                }
-            }
-
-            System.out.println("______________________");
-            for (Card c : gameCardList)
-                System.out.println(c.getRank() + " " + c.getSuit());
-            System.out.println("______________________");
-
-            Gson gson = new Gson();
-            PlayerGameData playerGameData = new PlayerGameData();
-
-            for (int i = 1; i <= 6; i++) {
-                if (connectedPlayersList.get(i) != null) {
-
-                    playerGameData.GAMEDATA.add(connectedPlayersList.get(i));
-
-                }
-            }
-
-            System.out.println(gson.toJson(playerGameData));
 
 
         } else if (isJsonObject && jsonObject.has("CHANGECARD") && gameStarted) {
@@ -199,31 +147,35 @@ public class SessionHandler extends TextWebSocketHandler {
 
             //player has to match the session with initial session which he used to start the game
             //this way make sures that the same player is requesting from the server
-            if(tempPlayer.getPlayerSession() == session) {
+            if (tempPlayer.getPlayerSession() == session) {
 
                 //check if player has already changed 3 cards. if not....
-                if(tempPlayer.getNumberOfChangedCards() < 3){
+                if (tempPlayer.getNumberOfChangedCards() < 3) {
 
-                    ArrayList<PlayerHand> tempPlayerHand = new ArrayList<>();
+                    ArrayList<PlayerCard> tempPlayerHand = new ArrayList<>();
                     tempPlayerHand.addAll(tempPlayer.getPlayerHand());
 
                     //iterate through player's hand
-                    for(int i=0; i<tempPlayerHand.size(); i++){
-                        PlayerHand ph = tempPlayerHand.get(i);
+                    for (int i = 0; i < tempPlayerHand.size(); i++) {
+                        PlayerCard ph = tempPlayerHand.get(i);
 
                         //if player hand id == player sent card id from the game,
                         //changes that card with the card which in on the top of the card list
-                        if(ph.getHandId() == pcc.getHandId()){
+                        if (ph.getCardId() == pcc.getHandId()) {
                             //TODO:old card and new card send to scoring algorithm
-                            PlayerHand oldCard = new PlayerHand(ph.getHandId(),ph.getRank(),ph.getSuit(),ph.isInitial());
+                            PlayerCard oldCard = new PlayerCard(ph.getCardId(), ph.getRank(), ph.getSuit(), ph.isInitial());
 
-                            PlayerHand newCard = new PlayerHand(ph.getHandId(),gameCardList.get(0).getRank(),gameCardList.get(0).getSuit(),false);
-                            tempPlayerHand.set(i,newCard);
+                            PlayerCard newCard = new PlayerCard(ph.getCardId(), gameCardList.get(0).getRank(), gameCardList.get(0).getSuit(), false);
+                            tempPlayerHand.set(i, newCard);
                         }
                     }
 
-                    //replace that player with new cards
+                    //replace that player cards with new cards
                     tempPlayer.setPlayerHand(tempPlayerHand);
+
+                    //player only allowed to change 3 cards
+                    tempPlayer.setNumberOfChangedCards(tempPlayer.getNumberOfChangedCards() + 1);
+
                     connectedPlayersList.put(tempPlayer.getPlayerId(), tempPlayer);
                 }
 
@@ -270,6 +222,83 @@ public class SessionHandler extends TextWebSocketHandler {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+
+    public void startGameAndDistributeCards() {
+
+//            for (Card c : gameCardList)
+//                System.out.println(c.getRank() + " " + c.getSuit());
+
+        //game started
+        gameStarted = true;
+
+        //---------ROUND 1----------
+        for (int i = 1; i <= 6; i++) {
+            if (connectedPlayersList.get(i) != null && !gameCardList.isEmpty()) {
+
+                List<PlayerCard> tempPlayerHand = new ArrayList<>();
+
+                //distribute random first two initial cards to every player
+                for (int j = 1; j <= 2; j++) {
+                    Random random = new Random();
+
+                    int randomCardNumber = random.nextInt(gameCardList.size());
+                    PlayerCard playerCard = new PlayerCard(j, gameCardList.get(randomCardNumber).getRank(), gameCardList.get(randomCardNumber).getSuit(), true);
+                    tempPlayerHand.add(playerCard);
+                    gameCardList.remove(randomCardNumber);
+                }
+
+                Player tempPlayer = connectedPlayersList.get(i);
+                tempPlayer.setPlayerHand(tempPlayerHand);
+                connectedPlayersList.put(i, tempPlayer);
+            }
+        }
+
+        System.out.println("______________________");
+        for (Card c : gameCardList)
+            System.out.println(c.getRank() + " " + c.getSuit());
+        System.out.println("______________________");
+
+        //---------ROUND 2----------
+        // distribute top card of the list to every one, one by one
+        for (int j = 1; j <= 3; j++) {
+            for (int i = 1; i <= 6; i++) {
+                if (connectedPlayersList.get(i) != null && !gameCardList.isEmpty()) {
+
+                    List<PlayerCard> tempPlayerHand = new ArrayList<>();
+                    tempPlayerHand.addAll(connectedPlayersList.get(i).getPlayerHand());
+
+                    //distribute first card on top of the list
+                    PlayerCard playerCard = new PlayerCard(j + 2, gameCardList.get(0).getRank(), gameCardList.get(0).getSuit(), false);
+                    tempPlayerHand.add(playerCard);
+                    gameCardList.remove(0);
+
+                    Player tempPlayer = connectedPlayersList.get(i);
+                    tempPlayer.setPlayerHand(tempPlayerHand);
+                    connectedPlayersList.put(i, tempPlayer);
+                }
+            }
+        }
+
+        System.out.println("______________________");
+        for (Card c : gameCardList)
+            System.out.println(c.getRank() + " " + c.getSuit());
+        System.out.println("______________________");
+
+        Gson gson = new Gson();
+        PlayerGameData playerGameData = new PlayerGameData();
+
+        for (int i = 1; i <= 6; i++) {
+            if (connectedPlayersList.get(i) != null) {
+
+                playerGameData.GAMEDATA.add(connectedPlayersList.get(i));
+
+            }
+        }
+
+        System.out.println(gson.toJson(playerGameData));
+
     }
 
 }
