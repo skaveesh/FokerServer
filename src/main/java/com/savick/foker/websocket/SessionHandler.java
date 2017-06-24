@@ -13,9 +13,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.IntConsumer;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 @Component
 public class SessionHandler extends TextWebSocketHandler {
@@ -29,13 +26,17 @@ public class SessionHandler extends TextWebSocketHandler {
 
     public static int connectedPlayersCount = 0;
 
-    private ArrayList<Card> gameCardList = new ArrayList<>();
+    private static ArrayList<Card> gameCardList = new ArrayList<>();
 
     public static Timer timerEliminatePlayers;
     public static Timer timerChangeCards;
     private static Timer timerGameDataSender;
 
     public static boolean canPlayerChangeCards = false;
+
+    private static String maxScoredPlayerName = null;
+    private static int maxScore = 0;
+    private static int roundNumber;
 
     public SessionHandler() {
         connectedPlayersList.put(1, null);
@@ -48,13 +49,6 @@ public class SessionHandler extends TextWebSocketHandler {
         //send game data to every player every 5 seconds
         timerGameDataSender = new Timer();
         timerGameDataSender.schedule(new GameDataDistribute(), 0, 5000);
-
-        //get the card pack and shuffle it
-        Deck d1 = new Deck();
-        d1.populate();
-        d1.shuffle();
-
-        gameCardList.addAll(d1.getCards());
     }
 
     @Override
@@ -81,7 +75,7 @@ public class SessionHandler extends TextWebSocketHandler {
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) {
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
 
         boolean isJsonObject;
         JSONObject jsonObject = new JSONObject();
@@ -105,7 +99,13 @@ public class SessionHandler extends TextWebSocketHandler {
             Gson gson = new Gson();
             PlayerInitialize player = gson.fromJson(jsonObject.getJSONObject("SETPLAYERNAME").toString(), PlayerInitialize.class);
 
-            connectedPlayersList.put(player.getPlayerId(), new Player(player.getPlayerId(), player.getPlayerName(), false, 0, 0, session, null));
+            //check the session to make sure same player sending the request
+            if (connectedPlayersList.get(player.getPlayerId()).getPlayerSession() == session) {
+                connectedPlayersList.put(player.getPlayerId(), new Player(player.getPlayerId(), player.getPlayerName(), false, 0, 0, session, null));
+
+                //send player the name change
+                session.sendMessage(new TextMessage(new JSONObject().put("PLAYERNAME", new JSONObject().put("playerName", connectedPlayersList.get(player.getPlayerId()).getPlayerName())).toString()));
+            }
 
         } else if (isJsonObject && jsonObject.has("STARTGAME") && !gameStarted) {
 
@@ -124,8 +124,9 @@ public class SessionHandler extends TextWebSocketHandler {
             }
 
             if (connectedPlayersCount < 2) {
-                // TODO: 6/23/2017 send to all
-                System.out.println(new JSONObject().put("PLAYERSCONNECTED", new JSONObject().put("message", "Only one player is connected")));
+
+                //sending to all. only one player is connected. so it will forward the message to that player
+                sendMessageConnectedAllPlayers(new JSONObject().put("PLAYERSCONNECTED", new JSONObject().put("message", "Only one player is connected")).toString());
                 return;
             }
 
@@ -140,27 +141,26 @@ public class SessionHandler extends TextWebSocketHandler {
             for (int i = 1; i <= 6; i++) {
                 //if player ready send message to all
 
-                try {
-                    if (connectedPlayersList.get(i) != null && !connectedPlayersList.get(i).isPlayerReady()) {
-                        //check if all the players are ready and if ready start the game
-                        PlayerReady playerReady = new PlayerReady();
+                if (connectedPlayersList.get(i) != null && !connectedPlayersList.get(i).isPlayerReady()) {
+                    //check if all the players are ready and if ready start the game
+                    PlayerReady playerReady = new PlayerReady();
 
-                        for (int j = 1; j <= 6; j++) {
-                            if (connectedPlayersList.get(j) != null) {
+                    iterateOverEveryPlayer(player1 -> {
+                        playerReady.PLAYERREADY.add(player1);
+                    });
 
-                                playerReady.PLAYERREADY.add(connectedPlayersList.get(j));
+                    //sending to all
+                    sendMessageConnectedAllPlayers(new Gson().toJson(playerReady));
 
-                            }
-                        }
+                    break;
+                } else if (i == 6) {
 
-                        ///TODO: sending to all
-                        System.out.println(new Gson().toJson(playerReady));
-
-                        break;
-                    } else if (i == 6) {
+                    //game has 5 rounds
+                    for (roundNumber = 1; roundNumber <= 5; roundNumber++) {
                         //start game
+                        initializeDeckOfCards();
+
                         startGameAndDistributeCards();
-                        gameStarted = true;
                         startTimerEliminatePlayers();
 
                         /**
@@ -169,15 +169,45 @@ public class SessionHandler extends TextWebSocketHandler {
                          */
                         canPlayerChangeCards = true;
 
-                        JSONObject jsonPlayerCards = new JSONObject();
-                        jsonPlayerCards.put("message", "You can change any 3 of your 5 cards. Only 30 seconds are allowed.");
-                        jsonPlayerCards.put("isAllowed", canPlayerChangeCards);
-                        System.out.println(new JSONObject().put("PLAYERCHANGECARDS", jsonPlayerCards));
+                        ChangeCard changeCard = new ChangeCard("You can change any 3 of your 5 cards. Only 30 seconds are allowed.", true);
+
+                        //send to all players
+                        sendMessageConnectedAllPlayers(new JSONObject().put("PLAYERCHANGECARDS", new Gson().toJson(changeCard)).toString());
 
                         startTimerChangeCards();
+
+                        //send to all about round details
+                        iterateOverEveryPlayer(player1 -> {
+                            if (player1.getPlayerSession().isOpen()) {
+                                try {
+                                    player1.getPlayerSession().sendMessage(new TextMessage(new JSONObject().put("ROUNDEND", new Gson().toJson(new Round(roundNumber, maxScore, maxScoredPlayerName))).toString()));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+
+                    // send to all
+                    iterateOverEveryPlayer(player1 -> {
+                        if (player1.getPlayerSession().isOpen()) {
+                            try {
+                                player1.getPlayerSession().sendMessage(new TextMessage(new JSONObject().put("GAMEEND", new JSONObject().put("message", "Game won by " + maxScoredPlayerName + " with the score of " + maxScore)).toString()));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                    //clear all player scores and card details and max score
+                    iterateOverEveryPlayer((player1) -> {
+                        player1.setScore(0);
+                        player1.setPlayerHand(null);
+                    });
+
+                    gameStarted = false;
+                    maxScore = 0;
+                    maxScoredPlayerName = null;
                 }
             }
 
@@ -205,7 +235,7 @@ public class SessionHandler extends TextWebSocketHandler {
 
                         //if player hand id == player sent card id from the game,
                         //changes that card with the card which in on the top of the card list
-                        if (ph.getCardId() == pcc.getHandId()) {
+                        if (ph.getCardId() == pcc.getCardId()) {
 
                             mockScorePlayers();
 
@@ -230,18 +260,15 @@ public class SessionHandler extends TextWebSocketHandler {
 
             PlayerGameData playerGameData = new PlayerGameData();
 
-            for (int i = 1; i <= 6; i++) {
-                if (connectedPlayersList.get(i) != null) {
+            iterateOverEveryPlayer(player -> {
+                playerGameData.GAMEDATA.add(player);
+            });
 
-                    playerGameData.GAMEDATA.add(connectedPlayersList.get(i));
-
-                }
-            }
-
-            System.out.println(new Gson().toJson(playerGameData));
+            //send to all players
+            sendMessageConnectedAllPlayers(new Gson().toJson(playerGameData));
         } else {
             try {
-                session.sendMessage(new TextMessage("error"));
+                session.sendMessage(new TextMessage(new JSONObject().put("ERROR", "Something went wrong").toString()));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -252,38 +279,39 @@ public class SessionHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         super.afterConnectionClosed(session, status);
 
-        for (int i = 1; i <= 6; i++) {
-            Player player = connectedPlayersList.get(i);
-            if (player != null && player.getPlayerSession() == session) {
+        iterateOverEveryPlayer(player -> {
+            if (player.getPlayerSession() == session) {
 
-                //TODO:Send to all
-                System.out.println(new JSONObject().put("PLAYERSDISCONNECTED", new JSONObject().put("message", player.getPlayerName() + " disconnected")));
-                break;
-            }
-        }
-
-        System.out.println(status);
-    }
-
-    private void sendMessageToOnGoingGameConnectedPlayers(String messageNotifyPlayer) throws IOException {
-        try {
-
-            for (int key : connectedPlayersList.keySet()) {
-
-                if (connectedPlayersList.get(key) != null && connectedPlayersList.get(key).getPlayerSession().isOpen()) {
-
-                    connectedPlayersList.get(key).getPlayerSession().sendMessage(new TextMessage(messageNotifyPlayer));
-
+                //Send to all
+                try {
+                    sendMessageConnectedAllPlayers(new JSONObject().put("PLAYERSDISCONNECTED", new JSONObject().put("message", player.getPlayerName() + " disconnected")).toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
+        });
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
+        System.out.println("Player Disconnected: " + status);
+    }
+
+    private void sendMessageConnectedAllPlayers(String messageNotifyPlayer) throws IOException {
+
+        iterateOverEveryPlayer(player -> {
+
+            if (player.getPlayerSession().isOpen()) {
+                try {
+                    player.getPlayerSession().sendMessage(new TextMessage(messageNotifyPlayer));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
     }
 
 
-    private void startGameAndDistributeCards() {
+    private void startGameAndDistributeCards() throws IOException {
 
 //            for (Card c : gameCardList)
 //                System.out.println(c.getRank() + " " + c.getSuit());
@@ -337,16 +365,12 @@ public class SessionHandler extends TextWebSocketHandler {
         Gson gson = new Gson();
         PlayerGameData playerGameData = new PlayerGameData();
 
-        for (int i = 1; i <= 6; i++) {
-            if (connectedPlayersList.get(i) != null) {
+        iterateOverEveryPlayer(player -> {
+            playerGameData.GAMEDATA.add(player);
+        });
 
-                playerGameData.GAMEDATA.add(connectedPlayersList.get(i));
-
-            }
-        }
-
-        //TODO: send to all
-        System.out.println(gson.toJson(playerGameData));
+        //send to all
+        sendMessageConnectedAllPlayers(gson.toJson(playerGameData));
 
     }
 
@@ -382,52 +406,57 @@ public class SessionHandler extends TextWebSocketHandler {
         }
 
         timerGameDataSender.cancel();
-        gameStarted = false;
 
         mockScorePlayers();
 
         PlayerGameData playerGameData = new PlayerGameData();
 
-        String playerName = null;
-        int maxScore = 0;
+        iterateOverEveryPlayer(player -> {
+            player.setPlayerReady(false);
 
-        for (int i = 1; i <= 6; i++) {
-            Player player = SessionHandler.connectedPlayersList.get(i);
-            if (player != null) {
-
-                player.setPlayerReady(false);
-
-                if (maxScore < player.getScore()) {
-                    maxScore = player.getScore();
-                    playerName = player.getPlayerName();
-                }
-
-                playerGameData.GAMEDATA.add(player);
-
+            if (maxScore < player.getScore()) {
+                maxScore = player.getScore();
+                maxScoredPlayerName = player.getPlayerName();
             }
-        }
 
-        // TODO: 6/23/2017 send to all
-        System.out.println(new Gson().toJson(playerGameData));
-
-        System.out.println(new JSONObject().put("GAMEEND", new JSONObject().put("message", "Game won by " + playerName + " with the score of " + maxScore)));
+            playerGameData.GAMEDATA.add(player);
+        });
 
 
-        // TODO: 6/23/2017 clear all player scores and card details
-        iterateOverEveryPlayer(connectedPlayersList,(Player)->{
-            Player.
+        // send to all
+        iterateOverEveryPlayer(player -> {
+            if (player.getPlayerSession().isOpen()) {
+                try {
+                    player.getPlayerSession().sendMessage(new TextMessage(new Gson().toJson(playerGameData)));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         });
     }
 
+    private static void initializeDeckOfCards() {
+        //remove all cards from the list
+        gameCardList.clear();
+
+        //get the card pack and shuffle it
+        Deck d1 = new Deck();
+        d1.populate();
+        d1.shuffle();
+
+        gameCardList.addAll(d1.getCards());
+    }
+
     //passing method to execute inside below method (lambda functions)
-    private static void iterateOverEveryPlayer(HashMap<Integer,Player> hm,Consumer co){
-        for (int i = 1; i <=6 ; i++) {
-            Player p = (Player) hm.get(i);
+    public static void iterateOverEveryPlayer(Consumer<Player> playerConsumer) {
+        for (int i = 1; i <= 6; i++) {
+            Player p = connectedPlayersList.get(i);
 
-            if(p!= null && p.getPlayerSession() != null){
+            if (p != null) {
 
-                //method get execute
-                co.accept(p);
+                //any method passed here, get executed
+                playerConsumer.accept(p);
+
             }
         }
     }

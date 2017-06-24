@@ -3,7 +3,9 @@ package com.savick.foker.game;
 import com.google.gson.Gson;
 import com.savick.foker.gson.PlayerGameData;
 import com.savick.foker.websocket.SessionHandler;
+import org.springframework.web.socket.TextMessage;
 
+import java.io.IOException;
 import java.util.TimerTask;
 
 /**
@@ -17,16 +19,21 @@ public class GameDataDistribute extends TimerTask {
 
             PlayerGameData playerGameData = new PlayerGameData();
 
-            for (int i = 1; i <= 6; i++) {
-                Player player = SessionHandler.connectedPlayersList.get(i);
-                if (player != null) {
+            SessionHandler.iterateOverEveryPlayer(player -> {
+                playerGameData.GAMEDATA.add(player);
+            });
 
-                    playerGameData.GAMEDATA.add(player);
-
+            //send message to all players - game is end
+            SessionHandler.iterateOverEveryPlayer(player -> {
+                if (player.getPlayerSession().isOpen()) {
+                    try {
+                        player.getPlayerSession().sendMessage(new TextMessage(new Gson().toJson(playerGameData)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
+            });
 
-            System.out.println(new Gson().toJson(playerGameData));
         }
     }
 }

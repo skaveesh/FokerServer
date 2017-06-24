@@ -2,8 +2,9 @@ package com.savick.foker.game;
 
 import com.savick.foker.websocket.SessionHandler;
 import org.json.JSONObject;
-import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.TextMessage;
 
+import java.io.IOException;
 import java.util.TimerTask;
 
 /**
@@ -30,8 +31,17 @@ public class EliminatePlayer extends TimerTask {
             SessionHandler.timerEliminatePlayers.cancel();
             SessionHandler.timerChangeCards.cancel();
 
-            //TODO: send message to all players - game is end
-            System.out.println(new JSONObject().put("GAMEEND", new JSONObject().put("message", "Only one player is connected")));
+            //send message to all players - game is end
+            SessionHandler.iterateOverEveryPlayer(player -> {
+                if (player.getPlayerSession().isOpen()) {
+                    try {
+                        player.getPlayerSession().sendMessage(new TextMessage(new JSONObject().put("GAMEEND", new JSONObject().put("message", "Only one player is connected")).toString()));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
         }
     }
 }

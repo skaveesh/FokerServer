@@ -5,7 +5,7 @@ package com.savick.foker.gson;
  */
 public class PlayerChangeCard {
     private int playerId;
-    private int handId;
+    private int cardId;
 
     public int getPlayerId() {
         return playerId;
@@ -15,11 +15,11 @@ public class PlayerChangeCard {
         this.playerId = playerId;
     }
 
-    public int getHandId() {
-        return handId;
+    public int getCardId() {
+        return cardId;
     }
 
-    public void setHandId(int handId) {
-        this.handId = handId;
+    public void setCardId(int cardId) {
+        this.cardId = cardId;
     }
 }
