@@ -27,7 +27,9 @@ public class GameDataDistribute extends TimerTask {
             SessionHandler.iterateOverEveryPlayer(player -> {
                 if (player.getPlayerSession().isOpen()) {
                     try {
-                        player.getPlayerSession().sendMessage(new TextMessage(new Gson().toJson(playerGameData)));
+                        synchronized (player.getPlayerSession()) {
+                            player.getPlayerSession().sendMessage(new TextMessage(new Gson().toJson(playerGameData)));
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

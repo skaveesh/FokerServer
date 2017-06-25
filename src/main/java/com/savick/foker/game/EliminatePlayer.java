@@ -29,13 +29,17 @@ public class EliminatePlayer extends TimerTask {
         if(playersCount < 2 && SessionHandler.gameStarted) {
             SessionHandler.gameStarted = false;
             SessionHandler.timerEliminatePlayers.cancel();
-            SessionHandler.timerChangeCards.cancel();
+            SessionHandler.timerChangeCards.shutdownNow();
+            SessionHandler.timerChangeCardsFuture.cancel(true);
 
             //send message to all players - game is end
             SessionHandler.iterateOverEveryPlayer(player -> {
                 if (player.getPlayerSession().isOpen()) {
+                    player.setPlayerReady(false); //set ready state false to connected player
                     try {
-                        player.getPlayerSession().sendMessage(new TextMessage(new JSONObject().put("GAMEEND", new JSONObject().put("message", "Only one player is connected")).toString()));
+                        synchronized (player.getPlayerSession()) {
+                            player.getPlayerSession().sendMessage(new TextMessage(new JSONObject().put("GAMEEND", new JSONObject().put("message", "Only one player is connected")).toString()));
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

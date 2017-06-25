@@ -2,7 +2,7 @@ package com.savick.foker.game;
 
 /**
  *
- * @author C2K
+ * @author Chulan Kotudurage
  */
 public enum Suit {
     HEARTS("Hearts"),
