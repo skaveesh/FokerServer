@@ -18,13 +18,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
- * @author Samintha Kaveesh
+ * @author Samintha Kaveesh.
  */
 
 @Component
 public class SessionHandler extends TextWebSocketHandler {
-
-//    private static HashMap<Integer, WebSocketSession> connectedGamePlayersList = new HashMap<>();
 
     //allowing maximum 6 players from this hash map
     public static HashMap<Integer, Player> connectedPlayersList = new HashMap<>();
@@ -56,11 +54,10 @@ public class SessionHandler extends TextWebSocketHandler {
         connectedPlayersList.put(5, null);
         connectedPlayersList.put(6, null);
 
-//        startTimerSendGameData();
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         for (int i = 1; i <= 6; i++) {
 
             if (connectedPlayersList.get(i) == null || !connectedPlayersList.get(i).getPlayerSession().isOpen()) {
@@ -83,7 +80,7 @@ public class SessionHandler extends TextWebSocketHandler {
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) {
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 
         boolean isJsonObject;
         JSONObject jsonObject = new JSONObject();
@@ -271,7 +268,6 @@ public class SessionHandler extends TextWebSocketHandler {
                                 maxScoredPlayerName = null;
                             }
                         }
-
                     }
                 };
 
@@ -346,7 +342,7 @@ public class SessionHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception{
         try {
             super.afterConnectionClosed(session, status);
         } catch (Exception e) {
@@ -452,23 +448,6 @@ public class SessionHandler extends TextWebSocketHandler {
         timerEliminatePlayers.schedule(new EliminatePlayer(), 0, 3000);
     }
 
-    private void startTimerChangeCards() {
-        //allocate player to change their 3 cards for 30 seconds
-//        timerChangeCards = new Timer();
-//        timerChangeCards.schedule(new ChangeCardsTimeAllocate(), 30000);
-    }
-
-//    public static void mockScorePlayers() {
-//        for (int i = 1; i <= 6; i++) {
-//            Player p = connectedPlayersList.get(i);
-//            if (p != null) {
-//                Random r = new Random();
-//
-//                p.setScore(r.nextInt(50) + p.getScore());
-//            }
-//        }
-//    }
-
     private static void initializeDeckOfCards() {
         //remove all cards from the list
         gameCardList.clear();
@@ -479,9 +458,6 @@ public class SessionHandler extends TextWebSocketHandler {
         d1.shuffle();
 
         gameCardList.addAll(d1.getCards());
-
-//        gameCardList.forEach(System.out::println);
-//        System.out.println("_____________________");
     }
 
     //passing method to execute inside below method (lambda functions)
@@ -498,7 +474,7 @@ public class SessionHandler extends TextWebSocketHandler {
         }
     }
 
-    public static int getHandInitialScore(List<PlayerCard> playerCards) {
+    private static int getHandInitialScore(List<PlayerCard> playerCards) {
         Score score = new Score();
         return score.getInitialHandTotal(playerCards);
     }

@@ -1,8 +1,9 @@
 package com.savick.foker.gson;
 
 /**
- * Created by skaveesh on 2017-06-18.
+ * Created by Samintha Kaveesh.
  */
+
 public class PlayerInitialize {
 
     private int playerId;

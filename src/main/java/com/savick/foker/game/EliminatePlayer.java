@@ -26,7 +26,7 @@ public class EliminatePlayer extends TimerTask {
             }
         }
 
-        if(playersCount < 2 && SessionHandler.gameStarted) {
+        if (playersCount < 2 && SessionHandler.gameStarted) {
             SessionHandler.gameStarted = false;
             SessionHandler.timerEliminatePlayers.cancel();
             SessionHandler.timerChangeCards.shutdownNow();

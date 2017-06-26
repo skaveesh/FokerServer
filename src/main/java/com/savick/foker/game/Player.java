@@ -7,8 +7,9 @@ import org.springframework.web.socket.WebSocketSession;
 import java.util.List;
 
 /**
- * Created by skaveesh on 2017-06-18.
+ * Created by Samintha Kaveesh.
  */
+
 public class Player {
 
     @SerializedName("playerId")

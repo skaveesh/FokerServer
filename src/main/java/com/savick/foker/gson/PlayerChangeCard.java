@@ -1,8 +1,9 @@
 package com.savick.foker.gson;
 
 /**
- * Created by samintha on 6/22/2017.
+ * Created by Samintha Kaveesh.
  */
+
 public class PlayerChangeCard {
     private int playerId;
     private int cardId;

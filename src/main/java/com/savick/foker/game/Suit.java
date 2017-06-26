@@ -2,8 +2,9 @@ package com.savick.foker.game;
 
 /**
  *
- * @author Chulan Kotudurage
+ * @author Chulan Kotudurage.
  */
+
 public enum Suit {
     HEARTS("Hearts"),
     SPADES("Spades"),

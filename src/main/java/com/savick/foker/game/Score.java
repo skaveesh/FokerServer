@@ -4,8 +4,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- *
- * @author Visith Dayananda
+ * @author Visith Dayananda.
  */
 
 public class Score {
@@ -17,18 +16,17 @@ public class Score {
         Integer totalOfInitialHand = getInitialHandTotal(oldHand);
         Integer totalOfReplacedHand = getReplaceHandTotal(newHand);
         Integer riskValue = getRiskValue(oldHand, newHand);
-        Integer totalScore = getTotalScore(totalOfInitialHand,totalOfReplacedHand,riskValue);
+        Integer totalScore = getTotalScore(totalOfInitialHand, totalOfReplacedHand, riskValue);
         return totalScore;
     }
 
     public Integer getInitialHandTotal(List<PlayerCard> oldHand) {
         Integer beforeTotal = 0;
-//        Integer i = 0;
+
         if (!oldHand.isEmpty()) {
-            for (Iterator<PlayerCard> it = oldHand.iterator(); it.hasNext();) {
+            for (Iterator<PlayerCard> it = oldHand.iterator(); it.hasNext(); ) {
                 PlayerCard initialHand = it.next();
-//                i++;
-//                System.out.println("Loop "+i);
+
                 Integer cardRank = initialHand.getRank();
                 switch (cardRank) {
                     case 1:
@@ -125,10 +123,7 @@ public class Score {
                 }
             }
         }
-//        else {
-//
-//        }
-//        System.out.println("Total of the initial hand = "+beforeTotal);
+
         return beforeTotal;
     }
 
@@ -232,10 +227,7 @@ public class Score {
                 }
             }
         }
-//        else {
-//
-//        }
-//        System.out.println("Total of the hand after the replacement = "+AfterTotal);
+
         return AfterTotal;
     }
 
@@ -247,7 +239,7 @@ public class Score {
             PlayerCard newHandCard = newHandForRisk.get(i);
 
             if (oldHandCard.getRank() != newHandCard.getRank() || !oldHandCard.getSuit().equalsIgnoreCase(newHandCard.getSuit())) {
-                if(oldHandCard.getRank()==1){
+                if (oldHandCard.getRank() == 1) {
                     calculatedRiskValue = calculatedRiskValue + 14;
                 } else {
                     calculatedRiskValue = calculatedRiskValue + oldHandCard.getRank();
@@ -256,7 +248,7 @@ public class Score {
                 calculatedRiskValue = 10;
             }
         }
-//        System.out.println("Risk Value = "+calculatedRiskValue);
+
         return calculatedRiskValue;
     }
 
@@ -265,12 +257,12 @@ public class Score {
         Integer scoreDifference = totalOfReplacedHand - totalOfInitialHand;
         Integer tempValue = 1;
 
-        if(scoreDifference<0){
+        if (scoreDifference < 0) {
             tempValue = -1;
         }
 
-        calculatedTotalScore = scoreDifference + (tempValue*riskValue);
-//        System.out.println("Total Score = "+calculatedTotalScore);
+        calculatedTotalScore = scoreDifference + (tempValue * riskValue);
+
         return calculatedTotalScore;
     }
 }

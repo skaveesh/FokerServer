@@ -10,8 +10,9 @@ import org.springframework.web.socket.TextMessage;
 import java.io.IOException;
 
 /**
- * Created by samintha on 6/23/2017.
+ * @author Samintha Kaveesh.
  */
+
 public class ChangeCardsTimeAllocate implements Runnable {
 
     public void run() {

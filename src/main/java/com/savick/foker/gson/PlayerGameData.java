@@ -5,8 +5,9 @@ import com.savick.foker.game.Player;
 import java.util.ArrayList;
 
 /**
- * Created by samintha on 6/22/2017.
+ * Created by Samintha Kaveesh.
  */
+
 public class PlayerGameData {
     public ArrayList<Player> GAMEDATA = new ArrayList<Player>();
 }

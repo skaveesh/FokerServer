@@ -9,8 +9,9 @@ import java.io.IOException;
 import java.util.TimerTask;
 
 /**
- * Created by samintha on 6/23/2017.
+ * @author Samintha Kaveesh.
  */
+
 public class GameDataDistribute extends TimerTask {
 
     public void run() {

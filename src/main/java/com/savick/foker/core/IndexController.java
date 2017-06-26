@@ -5,8 +5,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Created by skaveesh on 2017-06-04.
+ * @author Samintha Kaveesh.
  */
+
 @RestController
 public class IndexController implements ErrorController {
 
@@ -14,7 +15,7 @@ public class IndexController implements ErrorController {
 
     @RequestMapping(value = PATH)
     public String error() {
-        return "Error handling";
+        return "Error - No Access";
     }
 
     @Override

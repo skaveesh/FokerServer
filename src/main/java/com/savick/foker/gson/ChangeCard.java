@@ -4,8 +4,9 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Created by skaveesh on 2017-06-24.
+ * Created by Samintha Kaveesh.
  */
+
 public class ChangeCard {
 
     @SerializedName("message")
