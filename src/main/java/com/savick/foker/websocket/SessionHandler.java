@@ -68,9 +68,8 @@ public class SessionHandler extends TextWebSocketHandler {
                 try {
                     PlayerIdSend playerIdSend = new PlayerIdSend();
                     playerIdSend.setPlayerId(i);
-                    Gson gson = new Gson();
 
-                    session.sendMessage(new TextMessage(gson.toJson(playerIdSend)));
+                    session.sendMessage(new TextMessage(new JSONObject().put("PLAYERID", new JSONObject(new Gson().toJson(playerIdSend))).toString()));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -349,7 +348,7 @@ public class SessionHandler extends TextWebSocketHandler {
             e.printStackTrace();
         }
 
-        if (connectedPlayersCount < 2)
+        if (connectedPlayersCount < 2 && gameThread != null)
             gameThread.interrupt();
 
         iterateOverEveryPlayer(player -> {
