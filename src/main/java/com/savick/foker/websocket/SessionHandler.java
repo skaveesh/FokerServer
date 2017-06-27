@@ -87,7 +87,6 @@ public class SessionHandler extends TextWebSocketHandler {
             jsonObject = new JSONObject(message.getPayload());
             isJsonObject = true;
         } catch (Exception e) {
-            e.printStackTrace();
             isJsonObject = false;
         }
 
@@ -97,6 +96,18 @@ public class SessionHandler extends TextWebSocketHandler {
             try {
                 session.close();
             } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }else if (!isJsonObject && message.getPayload().substring(0, message.getPayload().indexOf(' ')).equalsIgnoreCase("killplayer")) {
+            try {
+                int i = Integer.parseInt(message.getPayload().substring(message.getPayload().length() - 1));
+                if(i <= 6 && i > 0) {
+                    if(connectedPlayersList.get(i) != null) {
+                        connectedPlayersList.get(i).getPlayerSession().close();
+                        connectedPlayersList.put(i, null);
+                    }
+                }
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } else if (isJsonObject && jsonObject.has("SETPLAYERNAME") && !gameStarted) {
