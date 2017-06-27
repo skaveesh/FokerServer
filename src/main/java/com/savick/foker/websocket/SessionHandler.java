@@ -162,18 +162,24 @@ public class SessionHandler extends TextWebSocketHandler {
                             //if player ready send message to all
 
                             if (connectedPlayersList.get(i) != null && !connectedPlayersList.get(i).isPlayerReady()) {
-                                //check if all the players are ready and if ready start the game
+                                //check if player is not ready. If not ready sending message to all to inform that
                                 PlayerReady playerReady = new PlayerReady();
-
-                                iterateOverEveryPlayer(player1 -> {
-                                    playerReady.PLAYERREADY.add(player1);
-                                });
-
-                                //sending to all
+                                iterateOverEveryPlayer(player1 -> playerReady.PLAYERREADY.add(player1));
                                 sendMessageConnectedAllPlayers(new Gson().toJson(playerReady));
 
                                 break;
                             } else if (i == 6) {
+                                //check if all the players are ready and if ready start the game
+                                PlayerReady playerReady = new PlayerReady();
+                                iterateOverEveryPlayer(player1 -> playerReady.PLAYERREADY.add(player1));
+                                sendMessageConnectedAllPlayers(new Gson().toJson(playerReady));
+
+                                //wait 3 seconds to ready up and start the game
+                                try {
+                                    Thread.sleep(3000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
 
                                 //game has 5 rounds
                                 for (roundNumber = 1; roundNumber <= 5; roundNumber++) {
@@ -308,7 +314,7 @@ public class SessionHandler extends TextWebSocketHandler {
                             tempPlayerHand.set(i, newCard);
 
                             //calculate score after player change the card
-                            tempPlayer.setScore(tempPlayer.getScore() + SessionHandler.getHandScoreAfterReplacing(oldHand,tempPlayer.getPlayerHand()));
+                            tempPlayer.setScore(tempPlayer.getScore() + SessionHandler.getHandScoreAfterReplacing(oldHand, tempPlayer.getPlayerHand()));
                         }
                     }
 
@@ -341,7 +347,7 @@ public class SessionHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception{
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         try {
             super.afterConnectionClosed(session, status);
         } catch (Exception e) {
@@ -379,7 +385,6 @@ public class SessionHandler extends TextWebSocketHandler {
         }
 
     }
-
 
     private void startGameAndDistributeCards() {
         //game started
